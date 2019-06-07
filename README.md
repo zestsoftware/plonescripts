@@ -22,3 +22,13 @@ Created by Maurits van Rees, Zest Software. This script is used to remove all im
 
 Created by Maurits van Rees, Zest Software. This script is used to check the automatic and manual redirects in all Plone Sites.
 When called with `--fix` it will remove useless or not working redirects: redirects to content that does not exist, or redirects from a path that does exist.
+
+## catalogoptimize.py
+
+Created by Hanno Slichting and Helge Tesdal. This optimises the btree data structure of the portal_catalog. Over time this structure can become inbalanced, which causes longer load times
+and efficiency of the catalog. We (Zest) seen noticable startup speed increases after rebalancing catalogs of larger
+and longer running (4+ year) sites. 
+
+The script seems to be safe to run on an online data.fs (using subtransactions), and we havent' experienced problems with it, but please first try it on a testing environment (and test for a period afterwards).
+
+https://raw.githubusercontent.com/hannosch/scripts/master/catalogoptimize.py
