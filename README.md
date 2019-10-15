@@ -9,7 +9,7 @@ attribution, please contact us at info@zestsoftware.nl
 
 Most scripts should be started from the command line by using
 
-> bin/instance run ./path/to/script.py --paramaters
+> bin/instance run ./path/to/script.py --parameters
 
 For some it also seems possible to run in a zeoclient/zeoserver setup, but
 do realise that you could run into ZODB conflict errors and degraded results if the database is also written to by other zeoclients.
@@ -27,8 +27,13 @@ When called with `--fix` it will remove useless or not working redirects: redire
 
 Created by Hanno Slichting and Helge Tesdal. This optimises the btree data structure of the portal_catalog. Over time this structure can become inbalanced, which causes longer load times
 and efficiency of the catalog. We (Zest) seen noticable startup speed increases after rebalancing catalogs of larger
-and longer running (4+ year) sites. 
+and longer running (4+ year) sites.
 
 The script seems to be safe to run on an online data.fs (using subtransactions), and we havent' experienced problems with it, but please first try it on a testing environment (and test for a period afterwards).
 
 https://raw.githubusercontent.com/hannosch/scripts/master/catalogoptimize.py
+
+## register_intids.py
+
+Created by Maurits van Rees, Zest Software.
+Go through all content of the Plone sites, and register an intid for each item if this was not done yet.
