@@ -37,13 +37,13 @@ def blen(bucket, track_objects=False):
 
 
 def get_max_bucket_size(data):
-    # Data is tree or treeset. 
+    # Data is tree or treeset.
     # We calculate instead of hardcoding because values can be patched.
     tmp = data.__class__()
-    if hasattr(tmp, 'items'):
-        update = lambda x:(x,x)
+    if hasattr(tmp, "items"):
+        update = lambda x: (x, x)
     else:
-        update = lambda x:x
+        update = lambda x: x
     count = 0
     tmp.update([update(count)])
     bucket = tmp._firstbucket
@@ -74,9 +74,9 @@ def new_tree(old_tree, modfactor=9):
     # instead of just the last one.
     # Idea: keep the tmp the same size as max and start on 2nd run inbetween 1st run
     # but with a max size delay
-    if hasattr(old_tree, 'items'):
+    if hasattr(old_tree, "items"):
         # BTree
-        for k,v in old_tree.items():
+        for k, v in old_tree.items():
             modcount = count % modfactor
             if modcount % 2 == 0:
                 new[k] = v
@@ -99,13 +99,18 @@ def new_tree(old_tree, modfactor=9):
     maxsize = get_max_bucket_size(new)
     maxkey = new.maxKey()
     if isinstance(maxkey, int):
-        synthetic = range(maxkey+1, maxkey+2+(maxsize-get_bucket_sizes(new._firstbucket)[-1]))
+        synthetic = range(
+            maxkey + 1, maxkey + 2 + (maxsize - get_bucket_sizes(new._firstbucket)[-1])
+        )
     elif isinstance(maxkey, basestring):
-        synthetic = [maxkey+str(x) for x in range((maxsize-get_bucket_sizes(new._firstbucket)[-1])+1)]
+        synthetic = [
+            maxkey + str(x)
+            for x in range((maxsize - get_bucket_sizes(new._firstbucket)[-1]) + 1)
+        ]
     else:
         synthetic = []
-            
-    if hasattr(new, 'items'):
+
+    if hasattr(new, "items"):
         for s in synthetic:
             new[s] = 0
         for s in synthetic:
@@ -126,10 +131,10 @@ def new_tree(old_tree, modfactor=9):
 
 def optimize_tree(parent, k, v, attr=True):
     transaction.begin()
-    bucket = getattr(v, '_firstbucket', None)
+    bucket = getattr(v, "_firstbucket", None)
     if bucket is None:
         return 0
-    readCurrent = getattr(bucket._p_jar, 'readCurrent', None)
+    readCurrent = getattr(bucket._p_jar, "readCurrent", None)
     if readCurrent is not None:
         track_objects = True
     else:
@@ -148,9 +153,17 @@ def optimize_tree(parent, k, v, attr=True):
         # Gather stats used to figure out modfactor
         before = sum(before_distribution.values())
         maxsize = get_max_bucket_size(v)
-        averagesize = sum([kk*vv for kk,vv in before_distribution.items()])*1.0/before
-        bucketsizes = [x for sublist in [(kk,)*vv for kk,vv in sorted(before_distribution.items())] for x in sublist]
-        median = bucketsizes[before/2]
+        averagesize = (
+            sum([kk * vv for kk, vv in before_distribution.items()]) * 1.0 / before
+        )
+        bucketsizes = [
+            x
+            for sublist in [
+                (kk,) * vv for kk, vv in sorted(before_distribution.items())
+            ]
+            for x in sublist
+        ]
+        median = bucketsizes[before / 2]
 
         # Filling the tree in a two-step process. The first time we set up the tree,
         # values are inserted sequentially, resulting in 50% fill rate.
@@ -159,12 +172,12 @@ def optimize_tree(parent, k, v, attr=True):
         # We want to set optimal fill rates based on current fill rate.
         # Fill rates of 55% or below indicates sequential index like dateindex
         # and we want 100% fill rate, otherwise 90% is good.
-        avgrate = float(averagesize)/maxsize
-        medianrate = float(median)/maxsize
+        avgrate = float(averagesize) / maxsize
+        medianrate = float(median) / maxsize
         if avgrate < 0.55 or medianrate < 0.55 or medianrate > 0.95:
-            modfactor = 2 # same number of items in both runs gives 100% fill
+            modfactor = 2  # same number of items in both runs gives 100% fill
         else:
-            modfactor = 9 # 5 in first run and 4 in second run gives 90% fill rate
+            modfactor = 9  # 5 in first run and 4 in second run gives 90% fill rate
 
         new = new_tree(v, modfactor)
         after_distribution, _ = blen(new._firstbucket)
@@ -185,10 +198,14 @@ def optimize_tree(parent, k, v, attr=True):
                     many_buckets[k] = v
                 else:
                     few_buckets.append(k)
-            newaveragesize = sum([kk*vv for kk,vv in after_distribution.items()])*1.0/after
-            newavgrate = float(newaveragesize)/maxsize
-            print('New buckets {fill size: count}: %s\nSingle buckets: %s\nfill: before %.3f after %.3f' % (
-                str(many_buckets), str(few_buckets), avgrate, newavgrate))
+            newaveragesize = (
+                sum([kk * vv for kk, vv in after_distribution.items()]) * 1.0 / after
+            )
+            newavgrate = float(newaveragesize) / maxsize
+            print(
+                "New buckets {fill size: count}: %s\nSingle buckets: %s\nfill: before %.3f after %.3f"
+                % (str(many_buckets), str(few_buckets), avgrate, newavgrate)
+            )
             transaction.commit()
             return before - after
 
@@ -204,7 +221,7 @@ def optimize(obj, no_data=False):
     result = 0
     obj._p_activate()
     for k, v in obj.__dict__.items():
-        if no_data and k == 'data':
+        if no_data and k == "data":
             # data blows up memory too much
             continue
         result += optimize_tree(obj, k, v)
@@ -214,13 +231,13 @@ def optimize(obj, no_data=False):
             new_v = obj.__dict__[k]
             for k2, v2 in new_v.iteritems():
                 result += optimize_tree(new_v, k2, v2, attr=False)
-    print('Optimized away %s buckets in %s' % (result, obj))
+    print("Optimized away %s buckets in %s" % (result, obj))
     return result
 
 
 # Loop over all Plone sites
 for site in app.values():
-    if not site.meta_type == 'Plone Site':
+    if not site.meta_type == "Plone Site":
         continue
 
     site_id = site.getId()
@@ -235,7 +252,7 @@ for site in app.values():
         print('%s - Optimizing "%s"' % (now, zcatalog_id))
         catalog = zcatalog._catalog
         # optimize paths, uids, data - skip data for portal_catalog
-        combined += optimize(catalog, no_data=zcatalog_id == 'portal_catalog')
+        combined += optimize(catalog, no_data=zcatalog_id == "portal_catalog")
         # optimize lexica
         for obj in zcatalog.values():
             if isinstance(obj, Lexicon):
@@ -248,5 +265,5 @@ for site in app.values():
                 combined += optimize(index)
     print('Optimized away %s buckets for site "%s"' % (combined, site_id))
 
-print('%s - Finishing...' % datetime.now().isoformat())
+print("%s - Finishing..." % datetime.now().isoformat())
 transaction.commit()

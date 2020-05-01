@@ -80,8 +80,6 @@ for site in plones:
         # Abort the transaction so we can start a new one.
         transaction.abort()
         continue
-    note = "Registered {0} intids for {1}".format(
-        fixed_intid, site.id
-    )
+    note = "Registered {0} intids for {1}".format(fixed_intid, site.id)
     commit(note)
     print("Done.")

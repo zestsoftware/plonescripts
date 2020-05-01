@@ -14,21 +14,22 @@ DAYS = -1
 # Commit after these many changes:
 LIMIT = 1000
 
-if '--dry-run' in sys.argv:
+if "--dry-run" in sys.argv:
     dry_run = True
-    print('Dry run selected, will not commit changes.')
+    print("Dry run selected, will not commit changes.")
 else:
     dry_run = False
 
 # Get all Plone Sites.  'app' is the Zope root.
-plones = [obj for obj in app.objectValues()
-          if getattr(obj, 'portal_type', '') == 'Plone Site']
+plones = [
+    obj for obj in app.objectValues() if getattr(obj, "portal_type", "") == "Plone Site"
+]
 
 
 def commit(note):
     print(note)
     if dry_run:
-        print('Dry run selected, not committing.')
+        print("Dry run selected, not committing.")
         return
     # Commit transaction and add note.
     tr = transaction.get()
@@ -37,10 +38,10 @@ def commit(note):
 
 
 for site in plones:
-    print('')
-    print('Handling Plone Site %s.' % site.id)
+    print("")
+    print("Handling Plone Site %s." % site.id)
     setSite(site)
-    catalog = getToolByName(site, 'portal_catalog')
+    catalog = getToolByName(site, "portal_catalog")
     count = 0
     purged = 0
     for brain in catalog.unrestrictedSearchResults():
@@ -61,7 +62,7 @@ for site in plones:
         final_date = obj.modified() - DAYS
         changed = False
         for key, value in ann.items():
-            if value['modified'] < final_date.millis():
+            if value["modified"] < final_date.millis():
                 # This may easily give an error, as it tries to remove
                 # two keys: del ann[key]
                 del ann.storage[key]
@@ -74,12 +75,16 @@ for site in plones:
         else:
             count += 1
             if count % LIMIT == 0:
-                note = ('Purged %d outdated image scales for %d items in '
-                        'Plone Site %s.' % (purged, count, site.id))
+                note = (
+                    "Purged %d outdated image scales for %d items in "
+                    "Plone Site %s." % (purged, count, site.id)
+                )
                 commit(note)
 
-    note = ('Finished purging %d outdated image scales for %d items in '
-            'Plone Site %s.' % (purged, count, site.id))
+    note = (
+        "Finished purging %d outdated image scales for %d items in "
+        "Plone Site %s." % (purged, count, site.id)
+    )
     commit(note)
 
-print('Done.')
+print("Done.")
