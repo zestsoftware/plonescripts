@@ -44,7 +44,11 @@ for site in plones:
     catalog = getToolByName(site, "portal_catalog")
     count = 0
     purged = 0
-    for brain in catalog.unrestrictedSearchResults():
+    if hasattr(catalog, "getAllBrains"):
+        brains = catalog.getAllBrains()
+    else:
+        brains = catalog.unrestrictedSearchResults()
+    for brain in brains:
         try:
             obj = brain.getObject()
         except:
@@ -61,13 +65,16 @@ for site in plones:
         # last modification date of the object.
         final_date = obj.modified() - DAYS
         changed = False
+        to_delete = []
         for key, value in ann.items():
             if value["modified"] < final_date.millis():
-                # This may easily give an error, as it tries to remove
-                # two keys: del ann[key]
-                del ann.storage[key]
-                purged += 1
+                to_delete.append(key)
                 changed = True
+        for key in to_delete:
+            # This may easily give an error, as it tries to remove
+            # two keys: del ann[key]
+            del ann.storage[key]
+        purged += len(to_delete)
         if not changed:
             # This avoids adding an empty annotation for items that
             # will never store scales.
