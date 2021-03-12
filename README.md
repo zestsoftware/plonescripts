@@ -37,3 +37,10 @@ https://raw.githubusercontent.com/hannosch/scripts/master/catalogoptimize.py
 
 Created by Maurits van Rees, Zest Software.
 Go through all content of the Plone sites, and register an intid for each item if this was not done yet.
+
+# fix_uid_index.py
+
+Created by Maurits van Rees, Zest Software.
+Rebuild the UID index by clearing and reindexing.
+And try to fix duplicate UIDs.
+This can at least happen when you import a zexp twice, in different folders.
