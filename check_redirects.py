@@ -2,6 +2,8 @@
 # Run this with:
 # bin/instance run check_redirects.py
 # or with extra options: --verbose --fix --site=Plone
+#
+# For updates and more such scripts, see https://github.com/zestsoftware/plonescripts
 from plone.app.redirector.interfaces import IRedirectionStorage
 from zope.component import getUtility
 from zope.component.hooks import setSite

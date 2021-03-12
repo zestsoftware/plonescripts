@@ -2,7 +2,8 @@
 # bin/instance run scripts/purge_image_scales.py
 #
 # Add --dry-run to change nothing and only get a report.
-
+#
+# For updates and more such scripts, see https://github.com/zestsoftware/plonescripts
 import sys
 import transaction
 from Products.CMFCore.utils import getToolByName

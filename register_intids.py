@@ -1,6 +1,8 @@
 # Run this with:
 # bin/instance run scripts/register_intids.py
 # or with extra options: --dry-run --site=plone
+#
+# For updates and more such scripts, see https://github.com/zestsoftware/plonescripts
 from plone import api
 from zope.component import getUtility
 from zope.component.hooks import setSite

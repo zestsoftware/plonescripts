@@ -6,6 +6,8 @@ Run this as a `zopectl run` script via for example:
   $ bin/instance run catalogoptimize.py
 
 Note that it does actual transaction commits.
+
+For updates and more such scripts, see https://github.com/zestsoftware/plonescripts
 """
 
 from datetime import datetime
