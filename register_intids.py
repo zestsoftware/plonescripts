@@ -67,7 +67,11 @@ for site in plones:
     catalog = api.portal.get_tool(name="portal_catalog")
     intids = getUtility(IIntIds)
     fixed_intid = 0
-    for brain in catalog.unrestrictedSearchResults():
+    if hasattr(catalog, "getAllBrains"):
+        brains = catalog.getAllBrains()
+    else:
+        brains = catalog.unrestrictedSearchResults()
+    for brain in brains:
         try:
             obj = brain.getObject()
         except (KeyError, ValueError, AttributeError):
