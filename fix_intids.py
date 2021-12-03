@@ -88,11 +88,12 @@ def remove_refs_missing_from_ids(intids):
         (uid, key) for (uid, key) in intids.refs.items() if key not in intids.ids
     ]
     print(
-        f"Found {len(refs_missing_from_ids)} intid references that are missing from the ids."
+        "Found %d intid references that are missing from the ids." % len(refs_missing_from_ids)
     )
     for uid, key in refs_missing_from_ids:
         print(
-            f"Deleting reference mapping intid {uid} to key with object {key.object} and path {key.path}."
+            "Deleting reference mapping intid %s to key with object %s and path %s." %
+            (uid, key.object, key.path)
         )
         del intids.refs[uid]
     return len(refs_missing_from_ids)
@@ -103,11 +104,12 @@ def remove_ids_missing_from_refs(intids):
         (key, uid) for (key, uid) in intids.ids.items() if uid not in intids.refs
     ]
     print(
-        f"Found {len(ids_missing_from_refs)} intid ids that are missing from the refs."
+        "Found %d intid ids that are missing from the refs." % len(ids_missing_from_refs)
     )
     for key, uid in ids_missing_from_refs:
         print(
-            f"Deleting id mapping key with object {key.object} and path {key.path} to intid {uid}."
+            "Deleting id mapping key with object %s and path %s to intid %s." %
+            (key.object, key.path, uid)
         )
         del intids.ids[key]
     return len(ids_missing_from_refs)
@@ -130,15 +132,16 @@ for site in plones:
     id_keys_missing_from_id = [key for key in intids.ids if key not in intids.ids]
     if id_keys_missing_from_id:
         print(
-            f"{len(id_keys_missing_from_id)} keys from intids.ids are missing from intid.ids. "
-            f"This sounds weird, but may happen when the hash method changes."
+            "%s keys from intids.ids are missing from intid.ids. "
+            "This sounds weird, but may happen when the hash method changes." %
+            len(id_keys_missing_from_id)
         )
     # All keys should be unique, otherwise we run into errors,
     # which might need a fix in the __hash__ method in five.intid.
     keys = list(intids.ids.keys())
     all_unique = len(keys) == len(set(keys))
     if not all_unique:
-        print(f"Only {len(set(keys))} out of {len(keys)} keys are unique.")
+        print("Only %d out of %d keys are unique." % (len(set(keys)), len(keys)))
     if options.repopulate or id_keys_missing_from_id or not all_unique:
         print("Repopulating BTrees.")
         repopulated = True
@@ -158,16 +161,18 @@ for site in plones:
         id_keys_missing_from_id = [key for key in intids.ids if key not in intids.ids]
         if id_keys_missing_from_id:
             print(
-                f"ERROR: {len(id_keys_missing_from_id)} keys from intids.ids are missing from intid.ids. "
-                f"This is after rebuilding the BTrees, so something is wrong."
+                "ERROR: %d keys from intids.ids are missing from intid.ids. "
+                "This is after rebuilding the BTrees, so something is wrong." %
+                len(id_keys_missing_from_id)
             )
             sys.exit(1)
         keys = list(intids.ids.keys())
         all_unique = len(keys) == len(set(keys))
         if not all_unique:
             print(
-                f"ERROR: Only {len(set(keys))} out of {len(keys)} keys are unique. "
-                f"This is after rebuilding the BTrees, so something is wrong."
+                "ERROR: Only %d out of %d keys are unique. "
+                "This is after rebuilding the BTrees, so something is wrong." %
+                (len(set(keys)), len(keys))
             )
             sys.exit(1)
 
@@ -177,7 +182,7 @@ for site in plones:
         for key in intids.ids
         if key.path and not app.unrestrictedTraverse(key.path, None)
     ]
-    print(f"{len(keys_with_a_broken_path)} keys with broken path")
+    print("%d keys with broken path" % len(keys_with_a_broken_path))
     # Some can be fixed, some need to be removed.
     fixed_broken = 0
     removed_broken = 0
@@ -204,14 +209,15 @@ for site in plones:
             removed_broken += 1
 
     print(
-        f"Removed, fixed and re-added {fixed_broken} keys with broken paths, and removed {removed_broken} completely."
+        "Removed, fixed and re-added %d keys with broken paths, and removed %d completely." %
+        (fixed_broken, removed_broken)
     )
 
     # Look for keys with a path outside of the site.  Remove these.
     keys_with_path_outside_of_site = [
-        key for key in intids.ids if key.path and not key.path.startswith(f"/{site.id}")
+        key for key in intids.ids if key.path and not key.path.startswith("/%s" % site.id)
     ]
-    print(f"{len(keys_with_path_outside_of_site)} keys with path outside of site")
+    print("%d keys with path outside of site" % len(keys_with_path_outside_of_site))
 
     removed_outside = 0
     for key in keys_with_path_outside_of_site:
@@ -239,7 +245,7 @@ for site in plones:
     # So go through all content.
     fixed_intid = 0
     brains = list(catalog.getAllBrains())
-    print(f"Found {len(brains)} brains.")
+    print("Found %d  brains." % len(brains))
     for brain in brains:
         try:
             obj = brain.getObject()
@@ -248,7 +254,7 @@ for site in plones:
         try:
             obj_intid = intids.getId(obj)
         except KeyError:
-            print(f"Registering intid for {brain.getPath()}")
+            print("Registering intid for %s" % brain.getPath())
             obj_intid = intids.register(obj)
             fixed_intid += 1
         # We have an intid.  Get the key for this intid
@@ -256,17 +262,19 @@ for site in plones:
         ref = intids.refs[obj_intid]
         if ref.path != brain.getPath():
             print(
-                f"WARNING: Object at path {brain.getPath()} has intid {obj_intid} which points to other path {ref.path}."
+                "WARNING: Object at path %s has intid %s which points to other path %s." %
+                (brain.getPath(), obj_intid, ref.path)
             )
             intids.unregister(obj)
             obj_intid = intids.register(obj)
-            print(f"Reregistered intid for {brain.getPath()}")
+            print("Reregistered intid for %s" % brain.getPath())
             fixed_intid += 1
             ref = intids.refs[obj_intid]
             if ref.path != brain.getPath():
                 # Yes, I have seen this happen...
                 print(
-                    f"ERROR: Object at path {brain.getPath()} has intid {obj_intid} which STILL points to other path {ref.path}."
+                    "ERROR: Object at path %s has intid %s which STILL points to other path %s" %
+                    (brain.getPath, obj_intid, ref.path)
                 )
 
     if not (
@@ -283,14 +291,24 @@ for site in plones:
         transaction.abort()
         continue
     note = (
-        f"Fixed intids for {site.id}: "
-        f"repopulated BTrees: {repopulated}, "
-        f"fixed {fixed_broken} keys with broken paths, "
-        f"removed {removed_broken} keys with broken paths, "
-        f"removed {removed_outside} keys with path outside of site, "
-        f"removed {refs_missing_from_ids} refs missing from ids, "
-        f"removed {ids_missing_from_refs} ids missing from refs, "
-        f"registered {fixed_intid} new intids."
+        "Fixed intids for %s: "
+        "repopulated BTrees: %d, "
+        "fixed %d keys with broken paths, "
+        "removed %d keys with broken paths, "
+        "removed %d keys with path outside of site, "
+        "removed %d refs missing from ids, "
+        "removed %d ids missing from refs, "
+        "registered %d new intids."
+        % (
+            site.id,
+            repopulated,
+            fixed_broken,
+            removed_broken,
+            removed_outside,
+            refs_missing_from_ids,
+            ids_missing_from_refs,
+            fixed_intid,
+        )
     )
     commit(note)
     print("Done.")
