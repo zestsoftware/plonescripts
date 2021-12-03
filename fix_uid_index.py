@@ -253,6 +253,4 @@ for site in plones:
     storage._rebuild()
 
     print("Committing...")
-    tr = transaction.get()
-    tr.note("Fixed inconsistencies in UID index for site %s." % site.id)
-    transaction.commit()
+    commit("Fixed inconsistencies in UID index for site %s." % site.id)
