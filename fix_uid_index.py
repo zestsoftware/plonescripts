@@ -86,7 +86,7 @@ for site in plones:
             obj = app.unrestrictedTraverse(path)
         except KeyError:
             print(
-                f"The catalog has an object at path {path} but nothing exists there."
+                "The catalog has an object at path %s but nothing exists there." % path
             )
             uncatalog_paths.append(path)
             continue
@@ -97,11 +97,12 @@ for site in plones:
         if path == actual_path:
             continue
         print(
-            f"Object is indexed at {path} but is actually at a different path, likely due to acquisition: {actual_path}"
+            "Object is indexed at %s but is actually at a different path, likely due to acquisition: %s" %
+            (path, actual_path)
         )
         uncatalog_paths.append(path)
     for path in uncatalog_paths:
-        print(f"Uncataloging object at {path}")
+        print("Uncataloging object at %s" % path)
         actual_catalog.uncatalogObject(path)
 
     # Problems in the UID index could also mean some objects have no intid.
@@ -116,16 +117,20 @@ for site in plones:
     _unindex_keys = index._unindex.keys()
     _unindex_values = index._unindex.values()
     print(
-        f"Number of _index uid keys:      {len(_index_keys)}, unique: {len(set(_index_keys))}"
+        "Number of _index uid keys:      %d, unique: %d" %
+        (len(_index_keys), len(set(_index_keys)))
     )
     print(
-        f"Number of _index doc id values: {len(_index_values)}, unique: {len(set(_index_values))}"
+        "Number of _index doc id values: %d, unique: %d" %
+        (len(_index_values), len(set(_index_values)))
     )
     print(
-        f"Number of _unindex doc id keys: {len(_unindex_keys)}, unique: {len(set(_unindex_keys))}"
+        "Number of _unindex doc id keys: %d, unique: %d" %
+        (len(_unindex_keys), len(set(_unindex_keys)))
     )
     print(
-        f"Number of _unindex uid values:  {len(_unindex_values)}, unique: {len(set(_unindex_values))}"
+        "Number of _unindex uid values:  %d, unique: %d" %
+        (len(_unindex_values), len(set(_unindex_values)))
     )
     missing = 0
     seen_uids = set()
@@ -139,36 +144,39 @@ for site in plones:
         if uid not in _index_keys:
             # Note: I have not seen this.
             path = catalog.getpath(docid)
-            print(f"UID {uid} is missing from _index keys. docid {docid}, path {path}")
+            print(
+                "UID %s is missing from _index keys. docid %s, path %s" %
+                (uid, docid, path))
             missing += 1
         if docid not in _index_values:
             # Note: this seems the main problem.
             path = catalog.getpath(docid)
             print(
-                f"Doc id {docid} is missing from _index values. UID {uid}, path {path}"
+                "Doc id %s is missing from _index values. UID %s, path %s" %
+                (docid, uid, path)
             )
             missing += 1
             recreate.append(path)
         if uid in seen_uids:
             # This probably only happens if docid is not in _index_values
             # (see previous condition), but let's check and report separately.
-            print(f"UID {uid} is duplicate in the _unindex values:")
+            print("UID %s is duplicate in the _unindex values:" % uid)
             for (key, value) in index._unindex.items():
                 if value != uid:
                     continue
                 path = catalog.getpath(key)
-                print(f"- doc id {key} path {path}")
+                print("- doc id %s path %s" % (key, path))
                 try:
                     obj = app.unrestrictedTraverse(path)
                 except KeyError:
-                    print(f"Ignoring unreachable path when checking duplicate UID: {path}")
+                    print("Ignoring unreachable path when checking duplicate UID: %s" % path)
                     continue
                 try:
                     intids.getId(obj)
                 except KeyError:
                     intids.register(obj)
                     fixed_intid += 1
-                    print(f"- Registered intid for object at path {path}")
+                    print("- Registered intid for object at path %s" % path)
         else:
             seen_uids.add(uid)
 
@@ -181,7 +189,7 @@ for site in plones:
 
     if recreate:
         print(
-            f"We will recreate {len(recreate)} UIDs/UUIDs that are currently duplicate."
+            "We will recreate %d UIDs/UUIDs that are currently duplicate." % len(recreate)
         )
         print("You might need to manually fix some links.")
         print(
@@ -195,7 +203,7 @@ for site in plones:
         try:
             obj = app.unrestrictedTraverse(path)
         except KeyError:
-            print(f"Ignoring unreachable path to recreate UID: {path}")
+            print("Ignoring unreachable path to recreate UID: %s" % path)
             continue
         old_uuid = obj.UID()
         # This might find an item by acquisition.
@@ -203,7 +211,10 @@ for site in plones:
         # may actually be migration-law/research.htm
         actual_path = "/".join(obj.getPhysicalPath())
         if actual_path != path:
-            print(f"Wanted to recreate UID for path {path}, but this leads to other path {actual_path}. Ignoring.")
+            print(
+                "Wanted to recreate UID for path %s, but this leads to other path %s. Ignoring." %
+                (path, actual_path)
+            )
             continue
         # Note: currently this gives zero results,
         # because the index is inconsistent for this uid:
@@ -215,7 +226,10 @@ for site in plones:
         # Reindex the UID index for this object and update its metadata in the catalog.
         obj.reindexObject(idxs=["UID"])
         new_uuid = obj.UID()
-        print(f"Changed UID from {old_uuid} to {new_uuid} for {path}")
+        print(
+            "Changed UID from %s to %s for %s" %
+            (old_uuid, new_uuid, path)
+        )
 
     # Even after the above fix, the clear and reindex is still needed.
     print("Clearing UID index")
@@ -225,9 +239,10 @@ for site in plones:
 
     if len(index._index) != len(index._unindex):
         print(
-            f"ERROR for site {site.id}: after all fixes and reindexing, "
-            f"the UID _index has {len(index._index)} entries "
-            f"and its reverse _unindex has {len(index._unindex)}"
+            "ERROR for site %s: after all fixes and reindexing, "
+            "the UID _index has %d entries "
+            "and its reverse _unindex has %d" %
+            (site.id, len(index._index), len(index._unindex))
         )
         print("ERROR: NOT COMMITTING ANYTHING.")
         # sys.exit(1)
@@ -239,5 +254,5 @@ for site in plones:
 
     print("Committing...")
     tr = transaction.get()
-    tr.note(f"Fixed inconsistencies in UID index for site {site.id}.")
+    tr.note("Fixed inconsistencies in UID index for site %s." % site.id)
     transaction.commit()
