@@ -21,6 +21,7 @@ from plone import api
 from plone.app.redirector.interfaces import IRedirectionStorage
 from plone.uuid.handlers import addAttributeUUID
 from plone.uuid.interfaces import ATTRIBUTE_NAME
+from plone.uuid.interfaces import IUUID
 from zope.component import getUtility
 from zope.component.hooks import setSite
 from zope.intid.interfaces import IIntIds
@@ -205,7 +206,9 @@ for site in plones:
         except KeyError:
             print("Ignoring unreachable path to recreate UID: %s" % path)
             continue
-        old_uuid = obj.UID()
+        # obj.UID() would return the UID of the parent in case
+        # obj is a Discussion Item.
+        old_uuid = IUUID(obj)
         # This might find an item by acquisition.
         # migration-law/migration-law/migration-law/research.htm
         # may actually be migration-law/research.htm
@@ -225,7 +228,7 @@ for site in plones:
         addAttributeUUID(obj, None)
         # Reindex the UID index for this object and update its metadata in the catalog.
         obj.reindexObject(idxs=["UID"])
-        new_uuid = obj.UID()
+        new_uuid = IUUID(obj)
         print(
             "Changed UID from %s to %s for %s" %
             (old_uuid, new_uuid, path)

@@ -5,6 +5,7 @@
 # https://github.com/plone/five.intid/issues/9#issuecomment-802940554
 
 from plone import api
+from plone.uuid.interfaces import IUUID
 from zope.component import getUtility
 from zope.component.hooks import setSite
 from zope.intid.interfaces import IIntIds
@@ -73,7 +74,10 @@ def commit(note):
 
 
 def actual_path(persistentkey):
-    obj = api.content.get(UID=persistentkey.object.UID())
+    # obj.UID() would return the UID of the parent in case obj is a Discussion Item.
+    # With IUUID we do get the uuid of the comment itself.
+    uuid = IUUID(persistentkey.object)
+    obj = api.content.get(UID=uuid)
     try:
         return "/".join(obj.getPhysicalPath())
     except Exception:
@@ -205,7 +209,7 @@ for site in plones:
             intids.ids[key] = uid
             fixed_broken += 1
         else:
-            # key.object.UID() is not known in the portal_catalog.
+            # key.object uuid is not known in the portal_catalog.
             removed_broken += 1
 
     print(
@@ -247,6 +251,8 @@ for site in plones:
     brains = list(catalog.getAllBrains())
     print("Found %d  brains." % len(brains))
     for brain in brains:
+        # Note: I had one Plone 6 site where Discussion Items (comments)
+        # had no intid, but this seems to have been an error.
         try:
             obj = brain.getObject()
         except (KeyError, ValueError, AttributeError):
