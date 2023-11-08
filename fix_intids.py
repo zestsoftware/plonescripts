@@ -6,6 +6,7 @@
 
 from plone import api
 from plone.uuid.interfaces import IUUID
+from Products.GenericSetup.tool import UNKNOWN
 from zope.component import getUtility
 from zope.component.hooks import setSite
 from zope.intid.interfaces import IIntIds
@@ -250,6 +251,11 @@ for site in plones:
     fixed_intid = 0
     brains = list(catalog.getAllBrains())
     print("Found %d  brains." % len(brains))
+    # We need to know if multilingual is installed.
+    setup_tool = api.portal.get_tool(name="portal_setup")
+    is_multilingual = setup_tool.getLastVersionForProfile(
+        "plone.app.multilingual:default"
+    ) != UNKNOWN
     for brain in brains:
         # Note: I had one Plone 6 site where Discussion Items (comments)
         # had no intid, but this seems to have been an error.
@@ -265,6 +271,10 @@ for site in plones:
             fixed_intid += 1
         # We have an intid.  Get the key for this intid
         # and check that it has the same path.
+        # BUT: this gives false positives for assets in plone.app.multilingual sites,
+        # so we do not try this then.
+        if is_multilingual:
+            continue
         ref = intids.refs[obj_intid]
         if ref.path != brain.getPath():
             print(
