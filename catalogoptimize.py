@@ -10,6 +10,7 @@ Note that it does actual transaction commits.
 For updates and more such scripts, see https://github.com/zestsoftware/plonescripts
 """
 
+from collections import defaultdict
 from datetime import datetime
 
 import transaction
@@ -22,14 +23,11 @@ from Products.ZCTextIndex.ZCTextIndex import ZCTextIndex
 
 
 def blen(bucket, track_objects=False):
-    distribution = {}
+    distribution = defaultdict(int)
     objects = []
     while True:
         bucket_len = len(bucket)
-        if distribution.get(bucket_len, None):
-            distribution[bucket_len] += 1
-        else:
-            distribution[bucket_len] = 1
+        distribution[bucket_len] += 1
         if track_objects:
             objects.append(bucket)
         bucket = bucket._next
@@ -104,7 +102,7 @@ def new_tree(old_tree, modfactor=9):
         synthetic = range(
             maxkey + 1, maxkey + 2 + (maxsize - get_bucket_sizes(new._firstbucket)[-1])
         )
-    elif isinstance(maxkey, basestring):
+    elif isinstance(maxkey, str):
         synthetic = [
             maxkey + str(x)
             for x in range((maxsize - get_bucket_sizes(new._firstbucket)[-1]) + 1)
@@ -165,7 +163,7 @@ def optimize_tree(parent, k, v, attr=True):
             ]
             for x in sublist
         ]
-        median = bucketsizes[before / 2]
+        median = bucketsizes[before // 2]
 
         # Filling the tree in a two-step process. The first time we set up the tree,
         # values are inserted sequentially, resulting in 50% fill rate.
@@ -233,7 +231,7 @@ def optimize(obj, no_data=False):
             new_v = obj.__dict__[k]
             for k2, v2 in new_v.iteritems():
                 result += optimize_tree(new_v, k2, v2, attr=False)
-    print("Optimized away %s buckets in %s" % (result, obj))
+    print("Optimized away {} buckets in {}".format(result, obj))
     return result
 
 
@@ -244,14 +242,14 @@ for site in app.values():
 
     site_id = site.getId()
     now = datetime.now().isoformat()
-    print('%s - Starting for site "%s" ...' % (now, site_id))
+    print('{} - Starting for site "{}" ...'.format(now, site_id))
     combined = 0
     for zcatalog in site.values():
         if not isinstance(zcatalog, ZCatalog):
             continue
         zcatalog_id = zcatalog.getId()
         now = datetime.now().isoformat()
-        print('%s - Optimizing "%s"' % (now, zcatalog_id))
+        print('{} - Optimizing "{}"'.format(now, zcatalog_id))
         catalog = zcatalog._catalog
         # optimize paths, uids, data - skip data for portal_catalog
         combined += optimize(catalog, no_data=zcatalog_id == "portal_catalog")
@@ -265,7 +263,7 @@ for site in app.values():
                 combined += optimize(index.index)
             else:
                 combined += optimize(index)
-    print('Optimized away %s buckets for site "%s"' % (combined, site_id))
+    print('Optimized away {} buckets for site "{}"'.format(combined, site_id))
 
 print("%s - Finishing..." % datetime.now().isoformat())
 transaction.commit()
