@@ -24,6 +24,7 @@ from plone.uuid.interfaces import ATTRIBUTE_NAME
 from plone.uuid.interfaces import IUUID
 from zope.component import getUtility
 from zope.component.hooks import setSite
+from zope.interface.interfaces import ComponentLookupError
 from zope.intid.interfaces import IIntIds
 
 
@@ -252,8 +253,14 @@ for site in plones:
         continue
 
     # On a hunch, let's rebuild the redirection storage.  Only takes a few seconds.
-    storage = getUtility(IRedirectionStorage)
-    storage._rebuild()
+    try:
+        storage = getUtility(IRedirectionStorage)
+    except ComponentLookupError:
+        # I have seen a site where the redirectionstorage was disabled.
+        print("Redirection storage component not found, so not rebuilding.")
+    else:
+        storage._rebuild()
+        print("Rebuilt redirection storage.")
 
     print("Committing...")
     commit("Fixed inconsistencies in UID index for site %s." % site.id)
