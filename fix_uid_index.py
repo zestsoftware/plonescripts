@@ -83,7 +83,14 @@ for site in plones:
     catalog = api.portal.get_tool(name="portal_catalog")
     actual_catalog = catalog._catalog
     uncatalog_paths = []
-    for path in actual_catalog.uids.keys():
+    print(
+        "Checking for paths in the catalog UID index that do not exist "
+        "or that lead to a different path..."
+    )
+    total = len(actual_catalog.uids.keys())
+    for index, path in enumerate(actual_catalog.uids.keys(), 1):
+        if index and index % 1000 == 0:
+            print("Checked %d/%d paths..." % (index, total))
         try:
             obj = app.unrestrictedTraverse(path)
         except KeyError:
